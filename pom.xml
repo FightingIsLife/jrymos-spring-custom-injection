@@ -4,12 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>injection</groupId>
-    <artifactId>jrymos-spring-custom-injection</artifactId>
+    <groupId>jrymos-spring-custom-injection</groupId>
+    <artifactId>injection</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>core</module>
+        <module>redisson</module>
     </modules>
 
     <properties>

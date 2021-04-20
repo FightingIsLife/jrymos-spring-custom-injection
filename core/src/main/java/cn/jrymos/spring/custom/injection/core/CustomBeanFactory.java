@@ -4,6 +4,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -14,6 +16,7 @@ import java.util.List;
  * 每次新增自定义注解，只需要实现CustomBeanFactory方法, 需要子类增加@Configuration注解, 子类应该保证是空的构造函数
  * @param <T> 注解的元注解至少应该有@Target({ElementType.FIELD})、@Retention(RetentionPolicy.RUNTIME)
  */
+@Order(Ordered.LOWEST_PRECEDENCE)
 public interface CustomBeanFactory<T extends Annotation> extends BeanFactoryPostProcessor {
 
 

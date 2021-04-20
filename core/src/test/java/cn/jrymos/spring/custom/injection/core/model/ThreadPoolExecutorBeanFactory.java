@@ -6,8 +6,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.BlockingQueue;
@@ -21,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 支持由spring管理线程池的线程池工厂
  */
-@Order(Ordered.LOWEST_PRECEDENCE)
 @Slf4j
 @Configuration
 public class ThreadPoolExecutorBeanFactory implements CustomBeanFactory<ThreadPoolExecutorConfig> {
