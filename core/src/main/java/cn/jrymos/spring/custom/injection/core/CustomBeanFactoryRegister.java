@@ -44,8 +44,9 @@ public class CustomBeanFactoryRegister {
         if (FACTORIES != null) {
             return;
         }
-        if (StringUtils.isNotEmpty(CustomInjectionCoreConfig.getAutoScanCustomBeanFactoryPackage())) {
-            List<Class<?>> packageChildClass = ReflectionUtils.getPackageChildClass(CustomInjectionCoreConfig.getAutoScanCustomBeanFactoryPackage(), CustomBeanFactory.class);
+        String autoScanCustomBeanFactoryPackage = CustomInjectionCoreConfig.getConfig().getAutoScanCustomBeanFactoryPackage();
+        if (StringUtils.isNotEmpty(autoScanCustomBeanFactoryPackage)) {
+            List<Class<?>> packageChildClass = ReflectionUtils.getPackageChildClass(autoScanCustomBeanFactoryPackage, CustomBeanFactory.class);
             Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> factories = packageChildClass.stream()
                 .map(c -> (Class<? extends CustomBeanFactory>) c)
                 .map(CustomBeanFactoryRegister::newCustomBeanFactory)

@@ -81,7 +81,7 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
          * 原因：支持lombok的@RequiredArgsConstructor、@AllArgsConstructor的使用
          */
         MethodParameter methodParameter = descriptor.getMethodParameter();
-        if (methodParameter != null && CustomInjectionCoreConfig.isEnhanceConstructParameterByFieldAnnotation()) {
+        if (methodParameter != null && CustomInjectionCoreConfig.getConfig().isEnhanceConstructParameterByFieldAnnotation()) {
             Field field = FieldUtils.getField(methodParameter.getExecutable().getDeclaringClass(), methodParameter.getParameterName(), true);
             return Optional.ofNullable(field)
                 .filter(f -> f.getType().isAssignableFrom(methodParameter.getParameterType()))

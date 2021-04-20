@@ -27,7 +27,7 @@ public class XxxTask {
 
         // 测试验证线程池注入的正确性
         assert xxxService.getExecutor1() == xxxService.getExecutor1();
-        assert xxxBiz.getBbb() == e2;
+        assert xxxBiz.getThreadPoolExecutor() == e2;
         assert e3 == xxxConfigService.getThreadPoolExecutor();
         assert e1 != e2;
         assert e1 != e3;

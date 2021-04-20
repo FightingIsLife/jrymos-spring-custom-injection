@@ -17,7 +17,6 @@ import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
@@ -51,7 +50,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
                     if (beanDefinition instanceof RootBeanDefinition && beanDefinition instanceof AnnotatedBeanDefinition) {
                         AnnotatedBeanDefinition abd = (AnnotatedBeanDefinition) beanDefinition;
                         RootBeanDefinition rbd = (RootBeanDefinition) beanDefinition;
-                        if (abd.getFactoryMethodMetadata() != null && abd.getFactoryMethodMetadata().getDeclaringClassName().startsWith(CustomInjectionCoreConfig.getPackagePrefix())) {
+                        if (abd.getFactoryMethodMetadata() != null && abd.getFactoryMethodMetadata().getDeclaringClassName().startsWith(CustomInjectionCoreConfig.getConfig().getPackagePrefix())) {
                             Class<?> rawClass = Class.forName(abd.getFactoryMethodMetadata().getDeclaringClassName());
                             Method[] methods = rawClass.getMethods();
                             for (Method method : methods) {
@@ -68,7 +67,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
                     }
                 } else {
                     Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
-                    if (rawClass.getPackage().getName().startsWith(CustomInjectionCoreConfig.getPackagePrefix())) {
+                    if (rawClass.getPackage().getName().startsWith(CustomInjectionCoreConfig.getConfig().getPackagePrefix())) {
                         for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
                             FieldUtils.getFieldsListWithAnnotation(rawClass, customBeanFactory.getAnnotationType())
                                 //遍历使用了自定义注解的字段
