@@ -7,11 +7,15 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.DependencyDescriptor;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.lang.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -37,12 +41,21 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
 
     @Override
     public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+        if (bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition) {
+            // 切换annotationElement, CustomRootBeanDefinition支持设置多个annotationElement
+            ((CustomRootBeanDefinition) bdHolder.getBeanDefinition()).safeChange(descriptor);
+        }
         // 父类匹配会对类型、Qualifier注解进行匹配
         boolean match = super.isAutowireCandidate(bdHolder, descriptor);
         List<Annotation> qualifierAnnotations = getQualifierAnnotations(descriptor);
         // 有必要校验一些依赖必须要有自定义注解
         checkIfMustHasCustomQualifierAnnotation(descriptor, qualifierAnnotations);
-        return match && isMatchQualifierAnnotation(qualifierAnnotations, bdHolder);
+        boolean result = match && isMatchQualifierAnnotation(qualifierAnnotations, bdHolder);
+        if (bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition) {
+            // 还原成旧的
+            ((CustomRootBeanDefinition) bdHolder.getBeanDefinition()).safeChangeToOld();
+        }
+        return result;
     }
 
     private void checkIfMustHasCustomQualifierAnnotation(DependencyDescriptor descriptor, List<Annotation> annotations) {
@@ -93,11 +106,12 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
      * 根据QualifierAnnotation注解匹配
      */
     private boolean isMatchQualifierAnnotation(List<Annotation> qualifierAnnotations, BeanDefinitionHolder beanName) {
-        return super.checkQualifiers(beanName, qualifierAnnotations.toArray(new Annotation[]{}))
-            && qualifierAnnotations.stream()
+        boolean superMatch = super.checkQualifiers(beanName, qualifierAnnotations.toArray(new Annotation[]{}));
+        boolean match = qualifierAnnotations.stream()
             .filter(annotation -> CUSTOM_QUALIFIER_ANNOTATIONS.contains(annotation.annotationType()))
             .map(annotation -> CustomBeanFactoryRegister.getUnique(annotation).getBeanName(annotation))
             .allMatch(name -> beanName.getBeanName().equals(name));
+        return superMatch && match;
     }
 
     public Set<Class<? extends Annotation>> getCustomQualifierTypes() {

@@ -22,10 +22,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 支持由spring管理线程池的线程池工厂
  */
 @Order(Ordered.LOWEST_PRECEDENCE)
-@Configuration
 @Slf4j
+@Configuration
 public class ThreadPoolExecutorBeanFactory implements CustomBeanFactory<ThreadPoolExecutorConfig> {
 
+    /**
+     * <pre>
+     * //如果重写了
+     * public boolean isNeedTypeArgs() {
+     *    return true;
+     * }
+     * //将会多一个clazz参数过来，这个clazz可能是ThreadPoolExecutor.class、也可能是ExecutorService.class，取决于业务代码如何写
+     * public ThreadPoolExecutor getThreadPoolExecutor(ThreadPoolExecutorConfig config, Class clazz)
+     * throws IllegalAccessException, InstantiationException {
+     *      ...
+     * }
+     * </pre>
+     */
     public ThreadPoolExecutor getThreadPoolExecutor(ThreadPoolExecutorConfig config) throws IllegalAccessException, InstantiationException {
         return new AutoShutdownThreadPoolExecutor(config.corePoolSize(), Math.max(config.corePoolSize(), config.maximumPoolSize()), config.keepAliveTime(),
             config.timeUnit(), new LinkedBlockingQueue<>(config.queueSize()), new SimpleThreadFactory(config.threadPoolId()), config.reject().newInstance());

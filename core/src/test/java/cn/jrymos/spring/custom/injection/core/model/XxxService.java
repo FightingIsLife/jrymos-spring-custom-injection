@@ -7,9 +7,12 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.ExecutorService;
 
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class XxxService {
     @Getter
-    @ThreadPoolExecutorConfig(threadPoolId = "executor1")
     private final ExecutorService executor1;
+
+    public XxxService(@ThreadPoolExecutorConfig(threadPoolId = "executor1") ExecutorService executor1) {
+        this.executor1 = executor1;
+    }
 }

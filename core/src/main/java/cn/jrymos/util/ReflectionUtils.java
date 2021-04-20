@@ -13,6 +13,8 @@ import org.springframework.util.ObjectUtils;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -75,8 +77,14 @@ public class ReflectionUtils {
     /**
      * 获取方法上含有annotationType注解的参数
      */
-    public static List<Parameter> getParametersListWithAnnotation(Method method, Class<Annotation> annotationType) {
-        Parameter[] parameters = method.getParameters();
+    public static List<Parameter> getParametersListWithAnnotation(Executable executable, Class<Annotation> annotationType) {
+        return getParametersListWithAnnotation(executable.getParameters(), annotationType);
+    }
+
+    /**
+     * 获取方法上含有annotationType注解的参数
+     */
+    public static List<Parameter> getParametersListWithAnnotation(Parameter[] parameters, Class<Annotation> annotationType) {
         if (ObjectUtils.isEmpty(parameters)) {
             return Collections.emptyList();
         }
