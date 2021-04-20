@@ -47,44 +47,63 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
             try {
                 if (StringUtils.isEmpty(beanDefinition.getBeanClassName())) {
-                    if (beanDefinition instanceof RootBeanDefinition && beanDefinition instanceof AnnotatedBeanDefinition) {
-                        AnnotatedBeanDefinition abd = (AnnotatedBeanDefinition) beanDefinition;
-                        RootBeanDefinition rbd = (RootBeanDefinition) beanDefinition;
-                        if (abd.getFactoryMethodMetadata() != null && abd.getFactoryMethodMetadata().getDeclaringClassName().startsWith(CustomInjectionCoreConfig.getConfig().getPackagePrefix())) {
-                            Class<?> rawClass = Class.forName(abd.getFactoryMethodMetadata().getDeclaringClassName());
-                            Method[] methods = rawClass.getMethods();
-                            for (Method method : methods) {
-                                if (rbd.isFactoryMethod(method)) {
-                                    for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
-                                        ReflectionUtils.getParametersListWithAnnotation(method, customBeanFactory.getAnnotationType())
-                                            //遍历使用了自定义注解的参数
-                                            .forEach(parameter -> registryRootBeanDefinition(registry, parameter, customBeanFactory));
-                                    }
-                                }
-                            }
-
-                        }
-                    }
+                    registerByFactoryMethod(registry, beanDefinition);
                 } else {
                     Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
                     if (rawClass.getPackage().getName().startsWith(CustomInjectionCoreConfig.getConfig().getPackagePrefix())) {
-                        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
-                            FieldUtils.getFieldsListWithAnnotation(rawClass, customBeanFactory.getAnnotationType())
-                                //遍历使用了自定义注解的字段
-                                .forEach(field -> registryRootBeanDefinition(registry, field, customBeanFactory));
-                        }
-                        Constructor<?> constructor = rawClass.getConstructors()[0];
-                        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
-                            ReflectionUtils.getParametersListWithAnnotation(constructor, customBeanFactory.getAnnotationType())
-                                //遍历使用了自定义注解的参数
-                                .forEach(parameter -> registryRootBeanDefinition(registry, parameter, customBeanFactory));
-                        }
+                        registerByFields(registry, rawClass);
+                        registerByConstructor(registry, rawClass);
                     }
                 }
 
             } catch (ClassNotFoundException e) {
                 log.error("class not found:", e);
                 throw e;
+            }
+        }
+    }
+
+    // 支持构造方法上参数的注解 注册到spring中
+    private void registerByConstructor(BeanDefinitionRegistry registry, Class<?> rawClass) {
+        // spring实例不会有多个构造函数
+        Constructor<?> constructor = rawClass.getConstructors()[0];
+        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+            ReflectionUtils.getParametersListWithAnnotation(constructor, customBeanFactory.getAnnotationType())
+                //遍历使用了自定义注解的参数
+                .forEach(parameter -> registryRootBeanDefinition(registry, parameter, customBeanFactory));
+        }
+    }
+
+    // 支持类字段上的注解 注册到spring中
+    private void registerByFields(BeanDefinitionRegistry registry, Class<?> rawClass) {
+        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+            FieldUtils.getFieldsListWithAnnotation(rawClass, customBeanFactory.getAnnotationType())
+                //遍历使用了自定义注解的字段
+                .forEach(field -> registryRootBeanDefinition(registry, field, customBeanFactory));
+        }
+    }
+
+    // 支持@Bean方法上的参数的注解 注册到spring中
+    private void registerByFactoryMethod(BeanDefinitionRegistry registry, BeanDefinition beanDefinition) throws ClassNotFoundException {
+        if (beanDefinition instanceof RootBeanDefinition && beanDefinition instanceof AnnotatedBeanDefinition) {
+            AnnotatedBeanDefinition abd = (AnnotatedBeanDefinition) beanDefinition;
+            if (abd.getFactoryMethodMetadata() == null) {
+                return;
+            }
+            // class前缀过滤
+            if (!abd.getFactoryMethodMetadata().getDeclaringClassName().startsWith(CustomInjectionCoreConfig.getConfig().getPackagePrefix())) {
+                return;
+            }
+            Class<?> rawClass = Class.forName(abd.getFactoryMethodMetadata().getDeclaringClassName());
+            Method[] methods = rawClass.getMethods();
+            for (Method method : methods) {
+                if (((RootBeanDefinition) beanDefinition).isFactoryMethod(method)) {
+                    for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+                        ReflectionUtils.getParametersListWithAnnotation(method, customBeanFactory.getAnnotationType())
+                            //遍历使用了自定义注解的参数
+                            .forEach(parameter -> registryRootBeanDefinition(registry, parameter, customBeanFactory));
+                    }
+                }
             }
         }
     }
