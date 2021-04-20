@@ -45,6 +45,15 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
         }
         for (String beanDefinitionName : beanDefinitionNames) {
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
+            if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
+                Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
+                if (CustomBeanFactory.class.isAssignableFrom(rawClass)) {
+                    CustomBeanFactoryRegister.register((CustomBeanFactory<? extends Annotation>) rawClass.newInstance());
+                }
+            }
+        }
+        for (String beanDefinitionName : beanDefinitionNames) {
+            BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
             try {
                 if (StringUtils.isEmpty(beanDefinition.getBeanClassName())) {
                     registerByFactoryMethod(registry, beanDefinition);
@@ -150,7 +159,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
         beanDefinition.setQualifiedElement(annotatedElement);
         ConstructorArgumentValues constructorArgumentValues = new ConstructorArgumentValues();
         constructorArgumentValues.addGenericArgumentValue(annotation);
-        if (customBeanFactory.isNeedTypeArgs()) {
+        if (customBeanFactory.isFactoryMethodNeedBeanClassTypeArg()) {
             constructorArgumentValues.addGenericArgumentValue(type);
         }
         beanDefinition.setAutowireMode(AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);

@@ -82,4 +82,9 @@ public class ThreadPoolExecutorBeanFactory implements CustomBeanFactory<ThreadPo
             log.info("{} threadPool end destroy", ((SimpleThreadFactory) getThreadFactory()).threadFactoryName);
         }
     }
+
+    @Override
+    public boolean openCheckDependencyDescriptor() {
+        return true;
+    }
 }

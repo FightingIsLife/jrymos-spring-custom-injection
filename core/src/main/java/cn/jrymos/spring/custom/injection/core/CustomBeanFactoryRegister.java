@@ -1,6 +1,7 @@
 package cn.jrymos.spring.custom.injection.core;
 
 import cn.jrymos.util.ReflectionUtils;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
@@ -60,7 +61,8 @@ public class CustomBeanFactoryRegister {
     /**
      * 注册一个customBeanFactory
      */
-    public synchronized static void register(CustomBeanFactory<Annotation> customBeanFactory) {
+    public synchronized static void register(CustomBeanFactory<? extends Annotation> customBeanFactory) {
+        Preconditions.checkNotNull(customBeanFactory);
         if (FACTORIES == null) {
             initFactories();
         }
@@ -75,7 +77,7 @@ public class CustomBeanFactoryRegister {
         }
         // 使用copy on write机制更新
         Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> map = Maps.newHashMap(FACTORIES);
-        map.put(customBeanFactory.getAnnotationType(), customBeanFactory);
+        map.put(customBeanFactory.getAnnotationType(), (CustomBeanFactory<Annotation>) customBeanFactory);
         FACTORIES = Collections.unmodifiableMap(map);
     }
 

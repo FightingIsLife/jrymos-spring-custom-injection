@@ -7,15 +7,10 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.DependencyDescriptor;
-import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.core.MethodParameter;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.lang.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -49,7 +44,7 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
         boolean match = super.isAutowireCandidate(bdHolder, descriptor);
         List<Annotation> qualifierAnnotations = getQualifierAnnotations(descriptor);
         // 有必要校验一些依赖必须要有自定义注解
-        checkIfMustHasCustomQualifierAnnotation(descriptor, qualifierAnnotations);
+        checkDependencyDescriptor(descriptor, qualifierAnnotations);
         boolean result = match && isMatchQualifierAnnotation(qualifierAnnotations, bdHolder);
         if (bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition) {
             // 还原成旧的
@@ -58,14 +53,9 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
         return result;
     }
 
-    private void checkIfMustHasCustomQualifierAnnotation(DependencyDescriptor descriptor, List<Annotation> annotations) {
-        for (CustomBeanFactory customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
-            if (customBeanFactory.getBeanClass().isAssignableFrom(descriptor.getDeclaredType())
-                && annotations.stream().noneMatch(annotation -> customBeanFactory.getAnnotationType().isInstance(annotation))) {
-                log.error("注入匹配失败，要自动注入的bean缺少{}注解，{},{},{}", customBeanFactory.getAnnotationType(),
-                    descriptor, descriptor.getDependencyType(), annotations);
-                throw new UnsupportedOperationException("注入匹配失败，要自动注入的bean缺少" + customBeanFactory.getAnnotationType() + "注解");
-            }
+    private void checkDependencyDescriptor(DependencyDescriptor descriptor, List<Annotation> annotations) {
+        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+            customBeanFactory.checkDependencyDescriptor(descriptor, annotations);
         }
     }
 
