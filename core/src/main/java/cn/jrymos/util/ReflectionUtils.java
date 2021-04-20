@@ -9,9 +9,15 @@ import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,12 +46,15 @@ public class ReflectionUtils {
                 if (resource.isReadable()) {
                     MetadataReader reader = cachingMetadataReaderFactory.getMetadataReader(resource);
                     String className = reader.getClassMetadata().getClassName();
-                    Class<?> clazz = Class.forName(className);
-                    classes.add(clazz);
+                    try {
+                        Class<?> clazz = Class.forName(className);
+                        classes.add(clazz);
+                    } catch (Throwable e) {
+                    }
                 }
             }
             return classes;
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (IOException e) {
             log.error("getPackageClass error:" + packageName);
             throw new UnsupportedOperationException(e);
         }
@@ -60,6 +69,20 @@ public class ReflectionUtils {
     public static List<Class<?>> getPackageChildClass(String packageName, Class<?> baseClass) {
         List<Class<?>> classes = getPackageClass(packageName);
         return classes.stream().filter(v -> baseClass.isAssignableFrom(v) && !baseClass.getName().equals(v.getName()))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取方法上含有annotationType注解的参数
+     */
+    public static List<Parameter> getParametersListWithAnnotation(Method method, Class<Annotation> annotationType) {
+        Parameter[] parameters = method.getParameters();
+        if (ObjectUtils.isEmpty(parameters)) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(parameters)
+            .filter(parameter -> !ObjectUtils.isEmpty(parameter.getAnnotations()))
+            .filter(parameter -> Arrays.stream(parameter.getAnnotations()).map(Annotation::annotationType).anyMatch(annotationType::equals))
             .collect(Collectors.toList());
     }
 }

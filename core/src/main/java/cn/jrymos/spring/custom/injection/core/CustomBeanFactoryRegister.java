@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 
 import java.lang.annotation.Annotation;
@@ -30,21 +31,29 @@ public class CustomBeanFactoryRegister {
 
     @SneakyThrows
     public static Collection<CustomBeanFactory<Annotation>> getFactories() {
-        if (FACTORIES != null) {
-            return FACTORIES.values();
+        if (FACTORIES == null) {
+            initFactories();
         }
-        synchronized (CustomBeanFactoryRegister.class) {
-            if (FACTORIES != null) {
-                return FACTORIES.values();
-            }
+        return FACTORIES.values();
+    }
+
+    /**
+     * 初始化 FACTORIES
+     */
+    private synchronized static void initFactories() {
+        if (FACTORIES != null) {
+            return;
+        }
+        if (StringUtils.isNotEmpty(CustomInjectionCoreConfig.getAutoScanCustomBeanFactoryPackage())) {
             List<Class<?>> packageChildClass = ReflectionUtils.getPackageChildClass(CustomInjectionCoreConfig.getAutoScanCustomBeanFactoryPackage(), CustomBeanFactory.class);
             Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> factories = packageChildClass.stream()
                 .map(c -> (Class<? extends CustomBeanFactory>) c)
                 .map(CustomBeanFactoryRegister::newCustomBeanFactory)
                 .collect(Collectors.toMap(CustomBeanFactory::getAnnotationType, Function.identity()));
             FACTORIES = Collections.unmodifiableMap(factories);
+        } else {
+            FACTORIES = Collections.emptyMap();
         }
-        return FACTORIES.values();
     }
 
     /**
@@ -52,7 +61,7 @@ public class CustomBeanFactoryRegister {
      */
     public synchronized static void register(CustomBeanFactory<Annotation> customBeanFactory) {
         if (FACTORIES == null) {
-            getFactories();
+            initFactories();
         }
         if (FACTORIES.containsKey(customBeanFactory.getAnnotationType())) {
             CustomBeanFactory<Annotation> sameAnnotationBeanFactory = FACTORIES.get(customBeanFactory.getAnnotationType());
@@ -63,6 +72,7 @@ public class CustomBeanFactoryRegister {
                 throw new IllegalStateException("not unique factory " + sameAnnotationBeanFactory + "," + customBeanFactory);
             }
         }
+        // 使用copy on write机制更新
         Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> map = Maps.newHashMap(FACTORIES);
         map.put(customBeanFactory.getAnnotationType(), customBeanFactory);
         FACTORIES = Collections.unmodifiableMap(map);

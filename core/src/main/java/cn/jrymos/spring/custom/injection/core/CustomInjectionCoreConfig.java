@@ -25,9 +25,9 @@ public class CustomInjectionCoreConfig {
     private static String PackagePrefix = "";
 
     /**
-     * 支持自动扫描注册的CustomBeanFactory
+     * 支持自动扫描注册的CustomBeanFactory，空package不扫描
      */
     @Setter
     @Getter
-    private static String autoScanCustomBeanFactoryPackage = "";
+    private static String autoScanCustomBeanFactoryPackage = null;
 }

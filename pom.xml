@@ -18,6 +18,7 @@
         <guava-version>30.1.1-jre</guava-version>
         <apache-commons-lang3-version>3.12.0</apache-commons-lang3-version>
         <slfj-version>1.7.30</slfj-version>
+        <junit-version>4.13.2</junit-version>
     </properties>
 
     <dependencies>
@@ -47,7 +48,12 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slfj-version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit-version}</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 

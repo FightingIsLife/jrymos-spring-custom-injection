@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.CustomAutowireConfigurer;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * 将CustomContextAnnotationAutowireCandidateResolver初始化到DefaultListableBeanFactory
  */
 @Slf4j
+@Configuration
 public class CustomAnnotationApplicationContextInitializer implements ApplicationContextInitializer {
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {

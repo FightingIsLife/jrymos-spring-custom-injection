@@ -7,6 +7,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.DependencyDescriptor;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.core.MethodParameter;
 
