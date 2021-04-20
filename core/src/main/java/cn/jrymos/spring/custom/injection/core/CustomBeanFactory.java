@@ -43,5 +43,4 @@ public interface CustomBeanFactory<T extends Annotation> {
         return getFactoryMethod().getName();
     }
 
-
 }
