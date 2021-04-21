@@ -75,7 +75,7 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
                  * @ThreadPoolExecutorConfig(threadPoolId="aaa", core=1) ...
                  * @ThreadPoolExecutorConfig(threadPoolId="aaa", core=2) ..
                  */
-                throw new IllegalArgumentException("not support different attributes");
+                throw new IllegalArgumentException("not support different attributes " + annotation + ", " + firstAnnotation);
             }
         }
         customFactoryMethodParameter.setFirstAnnotation(firstAnnotation);

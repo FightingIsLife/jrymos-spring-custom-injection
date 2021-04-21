@@ -1,6 +1,5 @@
 package cn.jrymos.spring.custom.injection.core;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
@@ -13,11 +12,10 @@ public class CustomFactoryMethodParameter<T extends Annotation> {
     /**
      * 一般使用first annotation的属性来创建bean
      */
-    @Getter
     @Setter
     private T firstAnnotation;
 
-    public <T extends Annotation> T getAnnotation() {
+    public <T extends Annotation> T getFirstAnnotation() {
         return firstAnnotation == null ? (T) customRootBeanDefinition.getFirstAnnotation() : (T) firstAnnotation;
     }
 

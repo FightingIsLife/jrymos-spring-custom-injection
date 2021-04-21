@@ -1,6 +1,8 @@
 package cn.jrymos.spring.custom.injection.core;
 
 
+import cn.jrymos.spring.custom.injection.core.CustomBeanFactory;
+import cn.jrymos.spring.custom.injection.core.CustomBeanFactoryRegister;
 import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.Test;

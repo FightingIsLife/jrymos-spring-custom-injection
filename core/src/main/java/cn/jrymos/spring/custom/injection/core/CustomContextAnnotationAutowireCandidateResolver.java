@@ -27,9 +27,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
 
-    private static final Set<Class<? extends Annotation>> CUSTOM_QUALIFIER_ANNOTATIONS = CustomBeanFactoryRegister.getFactories()
+    private final Set<Class<? extends Annotation>> CUSTOM_QUALIFIER_ANNOTATIONS = CustomBeanFactoryRegister.getFactories()
         .stream().map(CustomBeanFactory::getAnnotationType).map(t -> (Class<? extends Annotation>) t).collect(Collectors.toSet());
-    private static final Set<Class<? extends Annotation>> QUALIFIER_ANNOTATIONS = ImmutableSet.<Class<? extends Annotation>>builder()
+    private final Set<Class<? extends Annotation>> QUALIFIER_ANNOTATIONS = ImmutableSet.<Class<? extends Annotation>>builder()
         .addAll(CUSTOM_QUALIFIER_ANNOTATIONS)
         .add(Qualifier.class)
         .build();

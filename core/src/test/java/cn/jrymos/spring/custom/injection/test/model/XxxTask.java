@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Getter
@@ -16,8 +17,8 @@ public class XxxTask {
 
     public XxxTask(XxxService xxxService, XxxBiz xxxBiz, XxxConfig.XxxConfigService xxxConfigService,
                    @ThreadPoolExecutorConfig(threadPoolId = "executor1") ExecutorService e1,
-                   // 特别注意：XxxBiz 中指定了ThreadPoolExecutorConfig相关属性可能不会生效，因为这里的ThreadPoolExecutorConfig没有指定
-                   @ThreadPoolExecutorConfig(threadPoolId = "threadPoolExecutor") ExecutorService e2,
+                   @ThreadPoolExecutorConfig(corePoolSize = 2, maximumPoolSize = 2, keepAliveTime = 1,
+                       timeUnit = TimeUnit.SECONDS, queueSize = 1, threadPoolId = "threadPoolExecutor") ExecutorService e2,
                    @ThreadPoolExecutorConfig(threadPoolId = "hello") ExecutorService e3) {
         this.xxxService = xxxService;
         this.xxxBiz = xxxBiz;
