@@ -3,20 +3,15 @@ package cn.jrymos.spring.custom.injection.core;
 import com.google.common.collect.ImmutableSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
-import org.springframework.core.MethodParameter;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,32 +61,9 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
                 .filter(annotation -> QUALIFIER_ANNOTATIONS.contains(annotation.annotationType()))
                 .collect(Collectors.toList());
         }
-        /*
-         * 增强Qualifier类型的注解使用范围
-         * 获取methodParameter对应赋值字段上的注解，匹配赋值字段规则：字段名称和类型都相同的（非static）字段
-         * 原因：支持lombok的@RequiredArgsConstructor、@AllArgsConstructor的使用
-         */
-        MethodParameter methodParameter = descriptor.getMethodParameter();
-        if (methodParameter != null && CustomInjectionCoreConfig.getConfig().isEnhanceConstructParameterByFieldAnnotation()) {
-            Field field = FieldUtils.getField(methodParameter.getExecutable().getDeclaringClass(), methodParameter.getParameterName(), true);
-            return Optional.ofNullable(field)
-                .filter(f -> f.getType().isAssignableFrom(methodParameter.getParameterType()))
-                .filter(f -> !Modifier.isStatic(f.getModifiers()))
-                .map(this::getQualifierAnnotations)
-                .orElse(Collections.emptyList());
-        }
         return Collections.emptyList();
     }
 
-    private List<Annotation> getQualifierAnnotations(Field field) {
-        Annotation[] annotations = field.getAnnotations();
-        if (annotations == null || annotations.length == 0) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(annotations)
-            .filter(annotation -> QUALIFIER_ANNOTATIONS.contains(annotation.annotationType()))
-            .collect(Collectors.toList());
-    }
 
     /**
      * 根据QualifierAnnotation注解匹配

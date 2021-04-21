@@ -17,6 +17,10 @@ import java.util.Map;
 /**
  * 自定义注解的实例工厂
  * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数,子类需要通过@Configuration注册到spring中
+ * 相关demo:
+ * @see ThreadPoolFactory
+ * @see RedissonObjectFactory
+ * @see MemcachedLockFactory
  * @param <T> 注解的元注解至少应该有@Target({ElementType.FIELD})、@Retention(RetentionPolicy.RUNTIME)
  */
 public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, Ordered {
