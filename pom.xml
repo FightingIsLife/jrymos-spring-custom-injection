@@ -22,6 +22,7 @@
         <apache-commons-lang3-version>3.12.0</apache-commons-lang3-version>
         <slfj-version>1.7.30</slfj-version>
         <junit-version>4.13.2</junit-version>
+        <slf4j-simple-version>1.7.30</slf4j-simple-version>
     </properties>
 
     <dependencies>
@@ -64,7 +65,11 @@
             <version>${junit-version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j-simple-version}</version>
+        </dependency>
     </dependencies>
 
 </project>

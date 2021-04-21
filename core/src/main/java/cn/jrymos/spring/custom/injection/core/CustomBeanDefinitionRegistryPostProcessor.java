@@ -8,12 +8,14 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.CustomAutowireConfigurer;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.beans.factory.config.SingletonBeanRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -43,15 +45,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
         if (ObjectUtils.isEmpty(beanDefinitionNames)) {
             return;
         }
-        for (String beanDefinitionName : beanDefinitionNames) {
-            BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
-            if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
-                Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
-                if (CustomBeanFactory.class.isAssignableFrom(rawClass)) {
-                    CustomBeanFactoryRegister.register((CustomBeanFactory) rawClass.newInstance());
-                }
-            }
-        }
+        registryCustomBeanFactory(registry, beanDefinitionNames);
         for (String beanDefinitionName : beanDefinitionNames) {
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
             try {
@@ -68,6 +62,26 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
             } catch (ClassNotFoundException e) {
                 log.error("class not found:", e);
                 throw e;
+            }
+        }
+    }
+
+    /**
+     * 生成并注册CustomBeanFactory
+     */
+    private void registryCustomBeanFactory(BeanDefinitionRegistry registry, String[] beanDefinitionNames)
+        throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        for (String beanDefinitionName : beanDefinitionNames) {
+            BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
+            if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
+                Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
+                if (CustomBeanFactory.class.isAssignableFrom(rawClass)) {
+                    CustomBeanFactory customBeanFactory = (CustomBeanFactory) rawClass.newInstance();
+                    CustomBeanFactoryRegister.register(customBeanFactory);
+                    if (registry instanceof SingletonBeanRegistry) {
+                        ((SingletonBeanRegistry) registry).registerSingleton(customBeanFactory.getName(), customBeanFactory);
+                    }
+                }
             }
         }
     }
