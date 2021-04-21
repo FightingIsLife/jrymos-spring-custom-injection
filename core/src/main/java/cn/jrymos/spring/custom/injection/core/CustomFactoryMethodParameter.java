@@ -15,7 +15,7 @@ public class CustomFactoryMethodParameter<T extends Annotation> {
     @Setter
     private T firstAnnotation;
 
-    public <T extends Annotation> T getFirstAnnotation() {
+    public T getFirstAnnotation() {
         return firstAnnotation == null ? (T) customRootBeanDefinition.getFirstAnnotation() : (T) firstAnnotation;
     }
 

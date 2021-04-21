@@ -1,6 +1,7 @@
 package cn.jrymos.spring.custom.injection.memcached;
 
 import com.whalin.MemCached.MemCachedClient;
+import lombok.Getter;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -9,6 +10,7 @@ import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 /**
  * 一个简易的memcachedLock实现
  */
+@Getter
 public class MemcachedLock extends AbstractOwnableSynchronizer {
     private static final int LOCK_SIGNAL = 1;
     private final MemCachedClient memCachedClient;

@@ -17,10 +17,9 @@ import java.util.Map;
 
 /**
  * 自定义注解的实例工厂
- * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数
+ * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数,子类需要通过@Configuration注册到spring中
  * @param <T> 注解的元注解至少应该有@Target({ElementType.FIELD})、@Retention(RetentionPolicy.RUNTIME)
  */
-@Configuration
 public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, Ordered {
 
     /**
@@ -81,22 +80,6 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
         customFactoryMethodParameter.setFirstAnnotation(firstAnnotation);
     }
 
-    @Override
-    public final void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        //校验工厂类定义到了spring
-        String myName = getName();
-        beanFactory.getBeanDefinition(myName);
-        //校验customFactoryMethodParameter
-        for (String beanDefinitionName : beanFactory.getBeanDefinitionNames()) {
-            BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanDefinitionName);
-            if (beanDefinition instanceof CustomRootBeanDefinition && myName.equals(beanDefinition.getFactoryBeanName())) {
-                CustomFactoryMethodParameter parameter = (CustomFactoryMethodParameter) beanDefinition.getConstructorArgumentValues()
-                    .getArgumentValue(0, CustomFactoryMethodParameter.class).getValue();
-                checkAndUpdateCustomFactoryMethodParameter(parameter);
-            }
-        }
-    }
-
     /**
      * true 开启业务检查
      */
@@ -150,5 +133,22 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
     @Override
     public final int getOrder() {
         return Ordered.LOWEST_PRECEDENCE;
+    }
+
+
+    @Override
+    public final void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        //校验工厂类定义到了spring
+        String myName = getName();
+        beanFactory.getBeanDefinition(myName);
+        //校验customFactoryMethodParameter
+        for (String beanDefinitionName : beanFactory.getBeanDefinitionNames()) {
+            BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanDefinitionName);
+            if (beanDefinition instanceof CustomRootBeanDefinition && myName.equals(beanDefinition.getFactoryBeanName())) {
+                CustomFactoryMethodParameter parameter = (CustomFactoryMethodParameter) beanDefinition.getConstructorArgumentValues()
+                    .getArgumentValue(0, CustomFactoryMethodParameter.class).getValue();
+                checkAndUpdateCustomFactoryMethodParameter(parameter);
+            }
+        }
     }
 }

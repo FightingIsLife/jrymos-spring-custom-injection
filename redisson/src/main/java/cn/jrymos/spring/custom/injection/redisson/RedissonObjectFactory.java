@@ -20,7 +20,7 @@ import java.util.Map;
 
 @Slf4j
 @Configuration
-public class RedissonObjectBeanFactory extends CustomBeanFactory<RedissonKey, RObject> {
+public class RedissonObjectFactory extends CustomBeanFactory<RedissonKey, RObject> {
 
     private final Map<Class, Codec> codecMap = new HashMap<>();
 
@@ -95,7 +95,7 @@ public class RedissonObjectBeanFactory extends CustomBeanFactory<RedissonKey, RO
     @SneakyThrows
     @Override
     public Method getFactoryMethod() {
-        return getClass().getMethod("getRedissionBean", CustomRootBeanDefinition.class, String.class, RedissonClient.class);
+        return getClass().getMethod("getRedissionBean", CustomFactoryMethodParameter.class, String.class, RedissonClient.class);
     }
 
     @Override

@@ -38,6 +38,7 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
     public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
         if (bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition) {
             // 切换annotationElement, CustomRootBeanDefinition支持设置多个annotationElement
+            descriptor = new CustomDependencyDescriptor(descriptor);
             ((CustomRootBeanDefinition) bdHolder.getBeanDefinition()).safeChange(descriptor);
         }
         // 父类匹配会对类型、Qualifier注解进行匹配
@@ -54,7 +55,7 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
     }
 
     private void checkDependencyDescriptor(DependencyDescriptor descriptor, List<Annotation> annotations) {
-        for (CustomBeanFactory<Annotation, ?> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+        for (CustomBeanFactory customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
             customBeanFactory.checkDependencyDescriptor(descriptor, annotations);
         }
     }

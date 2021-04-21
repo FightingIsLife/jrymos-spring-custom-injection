@@ -5,7 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-public class RedissonObjectBeanFactoryTest {
+public class RedissonObjectFactoryTest {
 
     @Test
     public void test() {
@@ -13,9 +13,9 @@ public class RedissonObjectBeanFactoryTest {
             "cn.jrymos.spring.custom.injection.core", "cn.jrymos.spring.custom.injection.redisson");
         XxxService bean = applicationContext.getBean(XxxService.class);
         Assert.assertEquals(applicationContext.getBean("xxxService"), bean);
-        Assert.assertEquals(applicationContext.getBean("redissonObjectBeanFactory$hello"), bean.getLongRBucket());
-        Assert.assertEquals(applicationContext.getBean("redissonObjectBeanFactory$hello"), bean.getRBucket());
-        Assert.assertEquals(applicationContext.getBean("redissonObjectBeanFactory$testList"), bean.getLongRList());
-        Assert.assertEquals(applicationContext.getBean("redissonObjectBeanFactory$map"), bean.getStringLongRMap());
+        Assert.assertEquals(applicationContext.getBean("redissonObjectFactory$hello"), bean.getLongRBucket());
+        Assert.assertEquals(applicationContext.getBean("redissonObjectFactory$hello"), bean.getRBucket());
+        Assert.assertEquals(applicationContext.getBean("redissonObjectFactory$testList"), bean.getLongRList());
+        Assert.assertEquals(applicationContext.getBean("redissonObjectFactory$map"), bean.getStringLongRMap());
     }
 }

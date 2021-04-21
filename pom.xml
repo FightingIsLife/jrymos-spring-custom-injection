@@ -12,6 +12,7 @@
         <module>core</module>
         <module>redisson</module>
         <module>memcached</module>
+        <module>threadpool</module>
     </modules>
 
     <properties>
