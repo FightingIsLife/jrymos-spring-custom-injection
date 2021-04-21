@@ -1,4 +1,4 @@
-package cn.jrymos.spring.custom.injection.core.model;
+package cn.jrymos.spring.custom.injection.test.model;
 
 import cn.jrymos.spring.custom.injection.core.CustomBeanFactory;
 import cn.jrymos.spring.custom.injection.core.CustomFactoryMethodParameter;
@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ThreadPoolExecutorBeanFactory extends CustomBeanFactory<ThreadPoolExecutorConfig, ThreadPoolExecutor> {
 
     @SneakyThrows
-    public ThreadPoolExecutor factoryMethod(CustomFactoryMethodParameter customFactoryMethodParameter) {
-        ThreadPoolExecutorConfig config = customFactoryMethodParameter.getAnnotation();
+    public ThreadPoolExecutor factoryMethod(CustomFactoryMethodParameter<ThreadPoolExecutorConfig> customFactoryMethodParameter) {
+        ThreadPoolExecutorConfig config = customFactoryMethodParameter.getFirstAnnotation();
         return new AutoShutdownThreadPoolExecutor(config.corePoolSize(), Math.max(config.corePoolSize(), config.maximumPoolSize()), config.keepAliveTime(),
             config.timeUnit(), new LinkedBlockingQueue<>(config.queueSize()), new SimpleThreadFactory(config.threadPoolId()), config.reject().newInstance());
     }

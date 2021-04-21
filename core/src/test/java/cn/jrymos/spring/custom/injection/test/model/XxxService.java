@@ -1,7 +1,6 @@
-package cn.jrymos.spring.custom.injection.core.model;
+package cn.jrymos.spring.custom.injection.test.model;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutorService;

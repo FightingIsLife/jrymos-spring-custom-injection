@@ -1,6 +1,6 @@
 package cn.jrymos.spring.custom.injection.core;
 
-import cn.jrymos.spring.custom.injection.core.model.XxxTask;
+import cn.jrymos.spring.custom.injection.test.model.XxxTask;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -10,7 +10,7 @@ public class CustomBeanFactoryTest {
     @Test
     public void test() {
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext("cn.jrymos.spring.custom.injection.core");
-        applicationContext.scan("cn.jrymos.spring.custom.injection.core.model");
+        applicationContext.scan("cn.jrymos.spring.custom.injection.test.model");
         XxxTask bean = applicationContext.getBean(XxxTask.class);
         Assert.assertEquals(applicationContext.getBean("xxxService"), bean.getXxxService());
         Assert.assertEquals(applicationContext.getBean("xxxBiz"), bean.getXxxBiz());

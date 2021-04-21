@@ -1,4 +1,4 @@
-package cn.jrymos.spring.custom.injection.core.model;
+package cn.jrymos.spring.custom.injection.test.model;
 
 import lombok.Getter;
 import org.springframework.stereotype.Service;

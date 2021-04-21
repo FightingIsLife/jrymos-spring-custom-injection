@@ -1,7 +1,9 @@
 package cn.jrymos.spring.custom.injection.core;
 
 import com.google.common.base.Preconditions;
+import lombok.SneakyThrows;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
@@ -11,6 +13,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 自定义注解的实例工厂
@@ -41,16 +44,57 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
      * @see this#getBeanClass() 返回结果是要生产的bean实例
      * @see cn.jrymos.spring.custom.injection.redisson.RedissonObjectBeanFactory 重写了getFactoryMethod，传RedissonClient
      */
-    public abstract Method getFactoryMethod();
+    @SneakyThrows
+    public Method getFactoryMethod() {
+        return getClass().getMethod("factoryMethod", CustomFactoryMethodParameter.class);
+    }
 
-    public void checkCustomFactoryMethodParameter(CustomFactoryMethodParameter customFactoryMethodParameter) {
+    /**
+     * 如果没有重写getFactoryMethod，那就一定要重写factoryMethod
+     * 如果重写了getFactoryMethod，那就没有任何必要重写factoryMethod了
+     */
+    public R factoryMethod(CustomFactoryMethodParameter<T> customFactoryMethodParameter) {
+        //such as: return customFactoryMethodParameter.getBeanClass().newInstance();
+        throw new UnsupportedOperationException("not implements");
+    }
 
+
+    /**
+     * 校验和设置customFactoryMethodParameter相关属性
+     */
+    public void checkAndUpdateCustomFactoryMethodParameter(CustomFactoryMethodParameter<T> customFactoryMethodParameter) {
+        // 对注解进行校验
+        List<T> annotations = customFactoryMethodParameter.getAnnotations();
+        T firstAnnotation = customFactoryMethodParameter.getFirstAnnotation();
+        Map<String, Object> baseAttributes = AnnotationUtils.getAnnotationAttributes(firstAnnotation);
+        for (T annotation : annotations) {
+            // 默认所有的属性必须相同
+            if (!AnnotationUtils.getAnnotationAttributes(annotation).equals(baseAttributes)) {
+                /*
+                 * 例如：这种使用方式存在歧义，应该抛出异常
+                 * @ThreadPoolExecutorConfig(threadPoolId="aaa", core=1) ...
+                 * @ThreadPoolExecutorConfig(threadPoolId="aaa", core=2) ..
+                 */
+                throw new IllegalArgumentException("not support different attributes");
+            }
+        }
+        customFactoryMethodParameter.setFirstAnnotation(firstAnnotation);
     }
 
     @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+    public final void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         //校验工厂类定义到了spring
-        beanFactory.getBeanDefinition(getName());
+        String myName = getName();
+        beanFactory.getBeanDefinition(myName);
+        //校验customFactoryMethodParameter
+        for (String beanDefinitionName : beanFactory.getBeanDefinitionNames()) {
+            BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanDefinitionName);
+            if (beanDefinition instanceof CustomRootBeanDefinition && myName.equals(beanDefinition.getFactoryBeanName())) {
+                CustomFactoryMethodParameter parameter = (CustomFactoryMethodParameter) beanDefinition.getConstructorArgumentValues()
+                    .getArgumentValue(0, CustomFactoryMethodParameter.class).getValue();
+                checkAndUpdateCustomFactoryMethodParameter(parameter);
+            }
+        }
     }
 
     /**

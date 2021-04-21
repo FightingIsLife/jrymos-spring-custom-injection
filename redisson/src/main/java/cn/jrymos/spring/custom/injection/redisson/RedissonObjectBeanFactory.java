@@ -30,8 +30,8 @@ public class RedissonObjectBeanFactory extends CustomBeanFactory<RedissonKey, RO
      * @param redissonClient 依赖的spring管理的redissonClient
      * @return 返回一个实例交给spring管理
      */
-    public RObject getRedissionBean(CustomFactoryMethodParameter parameter, @Value("${redis.key.prefix}") String redisPrefixKey, RedissonClient redissonClient) {
-        RedissonKey key = parameter.getAnnotation();
+    public RObject getRedissionBean(CustomFactoryMethodParameter<RedissonKey> parameter, @Value("${redis.key.prefix}") String redisPrefixKey, RedissonClient redissonClient) {
+        RedissonKey key = parameter.getFirstAnnotation();
         Class beanType = parameter.getBeanClass();
         String redisKey = getAndCheckRedisKey(key, redisPrefixKey);
         String simpleName = getAndCheckSimpleName(beanType, redisKey);
