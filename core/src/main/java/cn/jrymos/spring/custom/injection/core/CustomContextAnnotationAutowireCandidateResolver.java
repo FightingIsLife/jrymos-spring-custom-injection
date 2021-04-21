@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
 
     private static final Set<Class<? extends Annotation>> CUSTOM_QUALIFIER_ANNOTATIONS = CustomBeanFactoryRegister.getFactories()
-        .stream().map(CustomBeanFactory::getAnnotationType).collect(Collectors.toSet());
+        .stream().map(CustomBeanFactory::getAnnotationType).map(t -> (Class<? extends Annotation>) t).collect(Collectors.toSet());
     private static final Set<Class<? extends Annotation>> QUALIFIER_ANNOTATIONS = ImmutableSet.<Class<? extends Annotation>>builder()
         .addAll(CUSTOM_QUALIFIER_ANNOTATIONS)
         .add(Qualifier.class)
@@ -54,7 +54,7 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
     }
 
     private void checkDependencyDescriptor(DependencyDescriptor descriptor, List<Annotation> annotations) {
-        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+        for (CustomBeanFactory<Annotation, ?> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
             customBeanFactory.checkDependencyDescriptor(descriptor, annotations);
         }
     }

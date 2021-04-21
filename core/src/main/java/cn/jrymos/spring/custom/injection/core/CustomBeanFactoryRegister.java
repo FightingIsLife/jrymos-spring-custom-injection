@@ -24,14 +24,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomBeanFactoryRegister {
 
-    private static volatile Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> FACTORIES;
+    private static volatile Map<Class<? extends Annotation>, CustomBeanFactory> FACTORIES;
 
     static {
         getFactories();
     }
 
     @SneakyThrows
-    public static Collection<CustomBeanFactory<Annotation>> getFactories() {
+    public static Collection<CustomBeanFactory> getFactories() {
         if (FACTORIES == null) {
             initFactories();
         }
@@ -48,7 +48,7 @@ public class CustomBeanFactoryRegister {
         String autoScanCustomBeanFactoryPackage = CustomInjectionCoreConfig.getConfig().getAutoScanCustomBeanFactoryPackage();
         if (StringUtils.isNotEmpty(autoScanCustomBeanFactoryPackage)) {
             List<Class<?>> packageChildClass = ReflectionUtils.getPackageChildClass(autoScanCustomBeanFactoryPackage, CustomBeanFactory.class);
-            Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> factories = packageChildClass.stream()
+            Map<Class<? extends Annotation>, CustomBeanFactory<Annotation, ?>> factories = packageChildClass.stream()
                 .map(c -> (Class<? extends CustomBeanFactory>) c)
                 .map(CustomBeanFactoryRegister::newCustomBeanFactory)
                 .collect(Collectors.toMap(CustomBeanFactory::getAnnotationType, Function.identity()));
@@ -61,13 +61,13 @@ public class CustomBeanFactoryRegister {
     /**
      * 注册一个customBeanFactory
      */
-    public synchronized static void register(CustomBeanFactory<? extends Annotation> customBeanFactory) {
+    public synchronized static void register(CustomBeanFactory customBeanFactory) {
         Preconditions.checkNotNull(customBeanFactory);
         if (FACTORIES == null) {
             initFactories();
         }
         if (FACTORIES.containsKey(customBeanFactory.getAnnotationType())) {
-            CustomBeanFactory<Annotation> sameAnnotationBeanFactory = FACTORIES.get(customBeanFactory.getAnnotationType());
+            CustomBeanFactory<Annotation, ?> sameAnnotationBeanFactory = FACTORIES.get(customBeanFactory.getAnnotationType());
             if (sameAnnotationBeanFactory.getClass() == customBeanFactory.getClass()) {
                 log.info("already register " + customBeanFactory);
                 return;
@@ -76,16 +76,16 @@ public class CustomBeanFactoryRegister {
             }
         }
         // 使用copy on write机制更新
-        Map<Class<? extends Annotation>, CustomBeanFactory<Annotation>> map = Maps.newHashMap(FACTORIES);
-        map.put(customBeanFactory.getAnnotationType(), (CustomBeanFactory<Annotation>) customBeanFactory);
+        Map<Class<? extends Annotation>, CustomBeanFactory> map = Maps.newHashMap(FACTORIES);
+        map.put(customBeanFactory.getAnnotationType(), customBeanFactory);
         FACTORIES = Collections.unmodifiableMap(map);
     }
 
     /**
      * 根据注解获取有且唯一的CustomBeanFactory
      */
-    public static CustomBeanFactory<Annotation> getUnique(Annotation annotation) {
-        CustomBeanFactory<Annotation> beanFactory = FACTORIES.get(annotation.annotationType());
+    public static CustomBeanFactory<Annotation, ?> getUnique(Annotation annotation) {
+        CustomBeanFactory<Annotation, ?> beanFactory = FACTORIES.get(annotation.annotationType());
         if (beanFactory == null) {
             throw new IllegalStateException("not found annotation " + annotation);
         }
@@ -93,7 +93,7 @@ public class CustomBeanFactoryRegister {
     }
 
     @SneakyThrows
-    private static CustomBeanFactory<Annotation> newCustomBeanFactory(Class<? extends CustomBeanFactory> clazz) {
+    private static CustomBeanFactory<Annotation, ?> newCustomBeanFactory(Class<? extends CustomBeanFactory> clazz) {
         return clazz.newInstance();
     }
 

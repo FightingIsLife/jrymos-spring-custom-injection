@@ -11,6 +11,7 @@
     <modules>
         <module>core</module>
         <module>redisson</module>
+        <module>memcached</module>
     </modules>
 
     <properties>

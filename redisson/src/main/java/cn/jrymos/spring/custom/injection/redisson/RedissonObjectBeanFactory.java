@@ -1,6 +1,8 @@
 package cn.jrymos.spring.custom.injection.redisson;
 
 import cn.jrymos.spring.custom.injection.core.CustomBeanFactory;
+import cn.jrymos.spring.custom.injection.core.CustomFactoryMethodParameter;
+import cn.jrymos.spring.custom.injection.core.CustomRootBeanDefinition;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +20,19 @@ import java.util.Map;
 
 @Slf4j
 @Configuration
-public class RedissonObjectBeanFactory implements CustomBeanFactory<RedissonKey> {
+public class RedissonObjectBeanFactory extends CustomBeanFactory<RedissonKey, RObject> {
 
     private final Map<Class, Codec> codecMap = new HashMap<>();
 
     /**
      * redission bean 工厂方法
-     * @param key 字段上的RedisKey注解
-     * @param beanType 返回bean的class类型
+     * @param parameter bean的定义信息
      * @param redissonClient 依赖的spring管理的redissonClient
      * @return 返回一个实例交给spring管理
      */
-    public RObject getRedissionBean(RedissonKey key, Class beanType, @Value("${redis.key.prefix}") String redisPrefixKey, RedissonClient redissonClient) {
+    public RObject getRedissionBean(CustomFactoryMethodParameter parameter, @Value("${redis.key.prefix}") String redisPrefixKey, RedissonClient redissonClient) {
+        RedissonKey key = parameter.getAnnotation();
+        Class beanType = parameter.getBeanClass();
         String redisKey = getAndCheckRedisKey(key, redisPrefixKey);
         String simpleName = getAndCheckSimpleName(beanType, redisKey);
         // 拼接redissonClient上的方法名
@@ -80,6 +83,11 @@ public class RedissonObjectBeanFactory implements CustomBeanFactory<RedissonKey>
     }
 
     @Override
+    public Class<RedissonKey> getAnnotationType() {
+        return RedissonKey.class;
+    }
+
+    @Override
     public String getAnnotationValue(RedissonKey annotation) {
         return annotation.redisKey();
     }
@@ -87,12 +95,7 @@ public class RedissonObjectBeanFactory implements CustomBeanFactory<RedissonKey>
     @SneakyThrows
     @Override
     public Method getFactoryMethod() {
-        return getClass().getMethod("getRedissionBean", RedissonKey.class, Class.class, String.class, RedissonClient.class);
-    }
-
-    @Override
-    public boolean isFactoryMethodNeedBeanClassTypeArg() {
-        return true;
+        return getClass().getMethod("getRedissionBean", CustomRootBeanDefinition.class, String.class, RedissonClient.class);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package cn.jrymos.spring.custom.injection.core.model;
 
 import cn.jrymos.spring.custom.injection.core.CustomBeanFactory;
+import cn.jrymos.spring.custom.injection.core.CustomFactoryMethodParameter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,24 +22,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @Configuration
-public class ThreadPoolExecutorBeanFactory implements CustomBeanFactory<ThreadPoolExecutorConfig> {
+public class ThreadPoolExecutorBeanFactory extends CustomBeanFactory<ThreadPoolExecutorConfig, ThreadPoolExecutor> {
 
-    /**
-     * <pre>
-     * //如果重写了
-     * public boolean isNeedTypeArgs() {
-     *    return true;
-     * }
-     * //将会多一个clazz参数过来，这个clazz可能是ThreadPoolExecutor.class、也可能是ExecutorService.class，取决于业务代码如何写
-     * public ThreadPoolExecutor getThreadPoolExecutor(ThreadPoolExecutorConfig config, Class clazz)
-     * throws IllegalAccessException, InstantiationException {
-     *      ...
-     * }
-     * </pre>
-     */
-    public ThreadPoolExecutor getThreadPoolExecutor(ThreadPoolExecutorConfig config) throws IllegalAccessException, InstantiationException {
+    @SneakyThrows
+    public ThreadPoolExecutor factoryMethod(CustomFactoryMethodParameter customFactoryMethodParameter) {
+        ThreadPoolExecutorConfig config = customFactoryMethodParameter.getAnnotation();
         return new AutoShutdownThreadPoolExecutor(config.corePoolSize(), Math.max(config.corePoolSize(), config.maximumPoolSize()), config.keepAliveTime(),
             config.timeUnit(), new LinkedBlockingQueue<>(config.queueSize()), new SimpleThreadFactory(config.threadPoolId()), config.reject().newInstance());
+    }
+
+    @SneakyThrows
+    public Method getFactoryMethod() {
+        return getClass().getMethod("factoryMethod", CustomFactoryMethodParameter.class);
+    }
+
+    @Override
+    public Class<ThreadPoolExecutorConfig> getAnnotationType() {
+        return ThreadPoolExecutorConfig.class;
     }
 
     @Override
@@ -46,11 +46,6 @@ public class ThreadPoolExecutorBeanFactory implements CustomBeanFactory<ThreadPo
         return annotation.threadPoolId();
     }
 
-    @SneakyThrows
-    @Override
-    public Method getFactoryMethod() {
-        return getClass().getMethod("getThreadPoolExecutor", ThreadPoolExecutorConfig.class);
-    }
 
     @RequiredArgsConstructor
     public static class SimpleThreadFactory implements ThreadFactory {

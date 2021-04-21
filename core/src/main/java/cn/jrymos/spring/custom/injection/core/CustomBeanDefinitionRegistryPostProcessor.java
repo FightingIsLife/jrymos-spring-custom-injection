@@ -48,7 +48,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
             if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
                 Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
                 if (CustomBeanFactory.class.isAssignableFrom(rawClass)) {
-                    CustomBeanFactoryRegister.register((CustomBeanFactory<? extends Annotation>) rawClass.newInstance());
+                    CustomBeanFactoryRegister.register((CustomBeanFactory) rawClass.newInstance());
                 }
             }
         }
@@ -76,7 +76,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
     private void registerByConstructor(BeanDefinitionRegistry registry, Class<?> rawClass) {
         // spring实例不会有多个构造函数
         Constructor<?> constructor = rawClass.getConstructors()[0];
-        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+        for (CustomBeanFactory<Annotation, ?> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
             ReflectionUtils.getParametersListWithAnnotation(constructor, customBeanFactory.getAnnotationType())
                 //遍历使用了自定义注解的参数
                 .forEach(parameter -> registryRootBeanDefinition(registry, parameter, customBeanFactory));
@@ -85,7 +85,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
 
     // 支持类字段上的注解 注册到spring中
     private void registerByFields(BeanDefinitionRegistry registry, Class<?> rawClass) {
-        for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+        for (CustomBeanFactory<Annotation, ?> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
             FieldUtils.getFieldsListWithAnnotation(rawClass, customBeanFactory.getAnnotationType())
                 //遍历使用了自定义注解的字段
                 .forEach(field -> registryRootBeanDefinition(registry, field, customBeanFactory));
@@ -107,7 +107,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
             Method[] methods = rawClass.getMethods();
             for (Method method : methods) {
                 if (((RootBeanDefinition) beanDefinition).isFactoryMethod(method)) {
-                    for (CustomBeanFactory<Annotation> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
+                    for (CustomBeanFactory<Annotation, ?> customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
                         ReflectionUtils.getParametersListWithAnnotation(method, customBeanFactory.getAnnotationType())
                             //遍历使用了自定义注解的参数
                             .forEach(parameter -> registryRootBeanDefinition(registry, parameter, customBeanFactory));
@@ -117,21 +117,21 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
         }
     }
 
-    private void registryRootBeanDefinition(BeanDefinitionRegistry registry, Parameter parameter, CustomBeanFactory<Annotation> customBeanFactory) {
+    private void registryRootBeanDefinition(BeanDefinitionRegistry registry, Parameter parameter, CustomBeanFactory customBeanFactory) {
         registryRootBeanDefinition(registry, customBeanFactory,
             parameter.getAnnotation(customBeanFactory.getAnnotationType()), parameter.getType(),
             ResolvableType.forMethodParameter(MethodParameter.forParameter(parameter)),
             parameter);
     }
 
-    private void registryRootBeanDefinition(BeanDefinitionRegistry registry, Field field, CustomBeanFactory<Annotation> customBeanFactory) {
+    private void registryRootBeanDefinition(BeanDefinitionRegistry registry, Field field, CustomBeanFactory customBeanFactory) {
         registryRootBeanDefinition(registry, customBeanFactory,
             field.getAnnotation(customBeanFactory.getAnnotationType()), field.getType(),
             ResolvableType.forField(field),
             field);
     }
 
-    private void registryRootBeanDefinition(BeanDefinitionRegistry registry, CustomBeanFactory<Annotation> customBeanFactory, Annotation annotation,
+    private void registryRootBeanDefinition(BeanDefinitionRegistry registry, CustomBeanFactory customBeanFactory, Annotation annotation,
                                             Class<?> type, ResolvableType targetType, AnnotatedElement annotatedElement) {
         String value = customBeanFactory.getAnnotationValue(annotation);
         log.info("registryRootBeanDefinition:{},{},{}", annotation, value, annotatedElement);
@@ -141,7 +141,7 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
         String beanName = customBeanFactory.getBeanName(annotation);
         if (registry.containsBeanDefinition(beanName)) {
             CustomRootBeanDefinition beanDefinition = (CustomRootBeanDefinition) registry.getBeanDefinition(beanName);
-            beanDefinition.put(annotatedElement, targetType);
+            beanDefinition.put(annotatedElement, targetType, annotation);
             return;
         }
         BeanDefinition beanDefinition = getBeanDefinition(customBeanFactory, annotation, type, targetType, annotatedElement);
@@ -149,22 +149,16 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
     }
 
 
-    private CustomRootBeanDefinition getBeanDefinition(CustomBeanFactory<Annotation> customBeanFactory, Annotation annotation,
+    private CustomRootBeanDefinition getBeanDefinition(CustomBeanFactory customBeanFactory, Annotation annotation,
                                              Class<?> type, ResolvableType targetType, AnnotatedElement annotatedElement) {
-        CustomRootBeanDefinition beanDefinition = new CustomRootBeanDefinition();
+        CustomRootBeanDefinition beanDefinition = new CustomRootBeanDefinition(annotatedElement, targetType, annotation);
         beanDefinition.setBeanClass(type);
-        beanDefinition.setTargetType(targetType);
         beanDefinition.setFactoryBeanName(customBeanFactory.getName());
         beanDefinition.setFactoryMethodName(customBeanFactory.getFactoryMethodName());
-        beanDefinition.setQualifiedElement(annotatedElement);
         ConstructorArgumentValues constructorArgumentValues = new ConstructorArgumentValues();
-        constructorArgumentValues.addGenericArgumentValue(annotation);
-        if (customBeanFactory.isFactoryMethodNeedBeanClassTypeArg()) {
-            constructorArgumentValues.addGenericArgumentValue(type);
-        }
+        constructorArgumentValues.addGenericArgumentValue(new CustomFactoryMethodParameter(beanDefinition));
         beanDefinition.setAutowireMode(AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
         beanDefinition.setConstructorArgumentValues(constructorArgumentValues);
-        beanDefinition.put(annotatedElement, targetType);
         return beanDefinition;
     }
 
