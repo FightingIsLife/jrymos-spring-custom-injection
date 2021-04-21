@@ -23,6 +23,8 @@ public class CustomRootBeanDefinition extends RootBeanDefinition {
     public CustomRootBeanDefinition(AnnotatedElement annotatedElement, ResolvableType resolvableType, Annotation annotation) {
         typeMap = new ConcurrentHashMap<>();
         annotatedElementMap = new ConcurrentHashMap<>();
+        setTargetType(resolvableType);
+        setQualifiedElement(annotatedElement);
         put(annotatedElement, resolvableType, annotation);
     }
 
