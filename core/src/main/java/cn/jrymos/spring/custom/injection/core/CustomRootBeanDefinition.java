@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * 自定义RootBeanDefinition，以便一个支持RootBeanDefinition多个AnnotatedElement
@@ -82,5 +83,12 @@ public class CustomRootBeanDefinition extends RootBeanDefinition {
     @Override
     public RootBeanDefinition cloneBeanDefinition() {
         return new CustomRootBeanDefinition(this);
+    }
+
+
+    public List<Class<?>> getBeanClasses() {
+        return typeMap.values().stream()
+            .map(ResolvableType::getRawClass)
+            .collect(Collectors.toList());
     }
 }

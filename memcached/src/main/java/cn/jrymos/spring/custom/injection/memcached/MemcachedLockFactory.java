@@ -20,7 +20,7 @@ public class MemcachedLockFactory extends CustomBeanFactory<MemcachedLockConfig,
     }
 
     public MemcachedLock getMemcachedLock(CustomFactoryMethodParameter<MemcachedLockConfig> parameter, MemCachedClient memCachedClient) {
-        MemcachedLockConfig annotation = parameter.getFirstAnnotation();// see checkAndUpdateCustomFactoryMethodParameter
+        MemcachedLockConfig annotation = parameter.getAnnotation();// see checkAndUpdateCustomFactoryMethodParameter
         return new MemcachedLock(memCachedClient, annotation.identify(), annotation.expSecs() <= 0 ? 10 : annotation.expSecs());
     }
 
@@ -41,7 +41,7 @@ public class MemcachedLockFactory extends CustomBeanFactory<MemcachedLockConfig,
     }
 
     @Override
-    public String getAnnotationValue(MemcachedLockConfig annotation) {
+    public String getBeanValue(MemcachedLockConfig annotation) {
         return annotation.identify();
     }
 }

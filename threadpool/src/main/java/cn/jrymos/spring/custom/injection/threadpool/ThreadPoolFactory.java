@@ -18,7 +18,7 @@ public class ThreadPoolFactory extends CustomBeanFactory<ThreadPoolConfig, Threa
     @SneakyThrows
     @Override
     public ThreadPoolExecutor factoryMethod(CustomFactoryMethodParameter<ThreadPoolConfig> customFactoryMethodParameter) {
-        ThreadPoolConfig config = customFactoryMethodParameter.getFirstAnnotation();
+        ThreadPoolConfig config = customFactoryMethodParameter.getAnnotation();
         BlockingQueue<Runnable> queue = getQueue(config.qSize());
         return new SimpleThreadPoolExecutor(config.id(), config.coreS(), Math.max(config.maxS(), config.coreS()), config.seconds(),
             TimeUnit.SECONDS, queue, new SimpleThreadFactory(config.id()), config.reject().newInstance());
@@ -49,7 +49,7 @@ public class ThreadPoolFactory extends CustomBeanFactory<ThreadPoolConfig, Threa
 
 
     @Override
-    public String getAnnotationValue(ThreadPoolConfig annotation) {
+    public String getBeanValue(ThreadPoolConfig annotation) {
         return annotation.id();
     }
 }

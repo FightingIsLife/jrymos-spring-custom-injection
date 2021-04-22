@@ -1,8 +1,5 @@
 package cn.jrymos.spring.custom.injection.core;
 
-
-import cn.jrymos.spring.custom.injection.core.CustomBeanFactory;
-import cn.jrymos.spring.custom.injection.core.CustomBeanFactoryRegister;
 import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,7 +39,6 @@ public class CustomBeanFactoryRegisterTest {
     @Retention(RetentionPolicy.RUNTIME)
     @Inherited
     public @interface TestAnnotation1 {
-        String value();
     }
 
 
@@ -50,7 +46,6 @@ public class CustomBeanFactoryRegisterTest {
     @Retention(RetentionPolicy.RUNTIME)
     @Inherited
     public @interface TestAnnotation {
-        String value();
     }
 
 
@@ -58,6 +53,11 @@ public class CustomBeanFactoryRegisterTest {
         @Override
         public Class<TestAnnotation1> getAnnotationType() {
             return TestAnnotation1.class;
+        }
+
+        @Override
+        public String getBeanValue(TestAnnotation1 annotation) {
+            return String.valueOf(annotation.hashCode());
         }
 
         @SneakyThrows
@@ -72,6 +72,11 @@ public class CustomBeanFactoryRegisterTest {
         @Override
         public Class<TestAnnotation> getAnnotationType() {
             return TestAnnotation.class;
+        }
+
+        @Override
+        public String getBeanValue(TestAnnotation annotation) {
+            return String.valueOf(annotation.hashCode());
         }
 
         @SneakyThrows

@@ -1,12 +1,12 @@
 package cn.jrymos.spring.custom.injection.core;
 
-import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
 import java.lang.annotation.Annotation;
@@ -24,7 +24,8 @@ import java.util.Map;
  * @see CustomBeanFactoryRegister#register(CustomBeanFactory)
  * @param <T> 注解的元注解至少应该有@Target({ElementType.FIELD})、@Retention(RetentionPolicy.RUNTIME)
  */
-public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, Ordered {
+@Slf4j
+public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, BeanNamePrefix, Ordered {
 
     /**
      * 自定义注解class类型
@@ -32,13 +33,14 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
     public abstract Class<T> getAnnotationType();
 
     /**
-     * 获取支持的注解的value，如果没有value字段或者唯一字段不是value，请重写
+     * 获取bean标识的值
+     * such as:
+     * @see ThreadPoolConfig#id
+     * @see CccCollection#hashcode
+     * @see RedissonKey#redisKey
+     * @see MemcachedLockConfig#identify
      */
-    public String getAnnotationValue(T annotation) {
-        String value = (String) AnnotationUtils.getAnnotationAttributes(annotation).get("value");
-        Preconditions.checkNotNull(value);
-        return value;
-    }
+    public abstract String getBeanValue(T annotation);
 
     /**
      * 获取工厂方法， 支持重写以传递更多的参数（只要是spring bean都支持传，无需做额外处理）
@@ -66,9 +68,16 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
      * 校验和设置customFactoryMethodParameter相关属性
      */
     public void checkAndUpdateCustomFactoryMethodParameter(CustomFactoryMethodParameter<T> customFactoryMethodParameter) {
+        // class类型检查
+        Class<?> modelClass = getBeanClass();
+        for (Class<?> beanClass : customFactoryMethodParameter.getBeanClasses()) {
+            if (!modelClass.isAssignableFrom(beanClass) && !beanClass.isAssignableFrom(modelClass)) {
+                throw new IllegalArgumentException("not support different class " + modelClass + ", " + beanClass);
+            }
+        }
         // 对注解进行校验
         List<T> annotations = customFactoryMethodParameter.getAnnotations();
-        T firstAnnotation = customFactoryMethodParameter.getFirstAnnotation();
+        T firstAnnotation = customFactoryMethodParameter.getAnnotation();
         Map<String, Object> baseAttributes = AnnotationUtils.getAnnotationAttributes(firstAnnotation);
         for (T annotation : annotations) {
             // 默认所有的属性必须相同
@@ -84,25 +93,6 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
         customFactoryMethodParameter.setFirstAnnotation(firstAnnotation);
     }
 
-    /**
-     * true 开启业务检查
-     */
-    protected boolean openCheckDependencyDescriptor() {
-        return false;
-    }
-
-    /**
-     * 检查业务依赖的正确性
-     */
-    public void checkDependencyDescriptor(DependencyDescriptor descriptor, List<Annotation> annotations) {
-        if (!openCheckDependencyDescriptor()) {
-            return;
-        }
-        if (getBeanClass().isAssignableFrom(descriptor.getDeclaredType())
-            && annotations.stream().noneMatch(annotation -> getAnnotationType().isInstance(annotation))) {
-            throw new UnsupportedOperationException("check failed，must need " + getAnnotationType() + " annotation");
-        }
-    }
 
     /**
      * 工厂生成的bean class
@@ -112,10 +102,25 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
     }
 
     /**
+     * 是否是注入集合类的工厂
+     * @see CccCollection
+     * @see CccMap
+     * @see CccCollectionFactory
+     * @see CccMapFactory
+     */
+    public final boolean isMultipleFactory() {
+        return getAnnotationType().getAnnotation(Multiple.class) != null;
+    }
+
+    /**
      * 工厂生产的bean的name
      */
     public final String getBeanName(T annotation) {
-        return this.getName() + "$" + getAnnotationValue(annotation);
+        return getBeanNamePrefix() + getBeanValue(annotation);
+    }
+
+    public final String getBeanNamePrefix() {
+        return getBeanNamePrefix(getClass());
     }
 
     /**
@@ -128,14 +133,8 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
     /**
      * 工厂注册到spring的beanName
      */
-    public final String getName() {
-        return getName(getClass());
-    }
-
-    public static String getName(Class<? extends CustomBeanFactory> clazz) {
-        String simpleName = clazz.getSimpleName();
-        int endIndex = simpleName.contains("$") ? simpleName.indexOf("$") : simpleName.length();
-        return simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1, endIndex);
+    public final String getFactoryName() {
+        return getFactoryName(getClass());
     }
 
     @Override
@@ -146,9 +145,9 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
 
     @Override
     public final void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        //校验工厂类定义到了spring
-        String myName = getName();
-        beanFactory.getBeanDefinition(myName);
+        //校验工厂类注册到了spring
+        String myName = getFactoryName();
+        beanFactory.getBean(myName);
         //校验customFactoryMethodParameter
         for (String beanDefinitionName : beanFactory.getBeanDefinitionNames()) {
             BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanDefinitionName);
@@ -158,5 +157,22 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
                 checkAndUpdateCustomFactoryMethodParameter(parameter);
             }
         }
+    }
+
+
+    public static String getFactoryName(Class<? extends CustomBeanFactory> clazz) {
+        String simpleName = clazz.getSimpleName();
+        // 匿名内部类
+        if (StringUtils.isEmpty(simpleName)) {
+            log.warn("not found class simple name : {}", clazz);
+            String name = CustomBeanFactory.class.getSimpleName() + "$" + clazz.hashCode();
+            return name.substring(0, 1).toLowerCase() + name.substring(1);
+        }
+        int endIndex = simpleName.contains("$") ? simpleName.indexOf("$") : simpleName.length();
+        return simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1, endIndex);
+    }
+
+    public static String getBeanNamePrefix(Class<? extends CustomBeanFactory> clazz) {
+        return getFactoryName(clazz) + "$-";
     }
 }

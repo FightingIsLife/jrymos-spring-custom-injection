@@ -6,13 +6,19 @@
 
     <groupId>jrymos-spring-custom-injection</groupId>
     <artifactId>injection</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
     <modules>
+        <!--    核心模块    -->
         <module>core</module>
+        <!--    自动注入RObject实现 demo模块    -->
         <module>redisson</module>
+        <!--    自动注入MemcachedLock实现 demo模块    -->
         <module>memcached</module>
+        <!--    自动注入ThreadPoolExecutor实现 demo模块    -->
         <module>threadpool</module>
+        <!--    自动注入Collection、List、Set、Map实现 demo模块    -->
+        <module>ccc</module>
     </modules>
 
     <properties>
@@ -23,6 +29,7 @@
         <slfj-version>1.7.30</slfj-version>
         <junit-version>4.13.2</junit-version>
         <slf4j-simple-version>1.7.30</slf4j-simple-version>
+        <spring-custom-injection.version>1.0.0</spring-custom-injection.version>
     </properties>
 
     <dependencies>

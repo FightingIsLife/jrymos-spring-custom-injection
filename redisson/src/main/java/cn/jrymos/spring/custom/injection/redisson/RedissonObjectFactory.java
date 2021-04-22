@@ -2,7 +2,6 @@ package cn.jrymos.spring.custom.injection.redisson;
 
 import cn.jrymos.spring.custom.injection.core.CustomBeanFactory;
 import cn.jrymos.spring.custom.injection.core.CustomFactoryMethodParameter;
-import cn.jrymos.spring.custom.injection.core.CustomRootBeanDefinition;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +30,7 @@ public class RedissonObjectFactory extends CustomBeanFactory<RedissonKey, RObjec
      * @return 返回一个实例交给spring管理
      */
     public RObject getRedissionBean(CustomFactoryMethodParameter<RedissonKey> parameter, @Value("${redis.key.prefix}") String redisPrefixKey, RedissonClient redissonClient) {
-        RedissonKey key = parameter.getFirstAnnotation();
+        RedissonKey key = parameter.getAnnotation();
         Class beanType = parameter.getBeanClass();
         String redisKey = getAndCheckRedisKey(key, redisPrefixKey);
         String simpleName = getAndCheckSimpleName(beanType, redisKey);
@@ -88,7 +87,7 @@ public class RedissonObjectFactory extends CustomBeanFactory<RedissonKey, RObjec
     }
 
     @Override
-    public String getAnnotationValue(RedissonKey annotation) {
+    public String getBeanValue(RedissonKey annotation) {
         return annotation.redisKey();
     }
 
@@ -96,10 +95,5 @@ public class RedissonObjectFactory extends CustomBeanFactory<RedissonKey, RObjec
     @Override
     public Method getFactoryMethod() {
         return getClass().getMethod("getRedissionBean", CustomFactoryMethodParameter.class, String.class, RedissonClient.class);
-    }
-
-    @Override
-    public boolean openCheckDependencyDescriptor() {
-        return true;
     }
 }

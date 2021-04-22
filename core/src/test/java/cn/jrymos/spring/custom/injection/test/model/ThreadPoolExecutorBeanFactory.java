@@ -26,7 +26,7 @@ public class ThreadPoolExecutorBeanFactory extends CustomBeanFactory<ThreadPoolE
 
     @SneakyThrows
     public ThreadPoolExecutor factoryMethod(CustomFactoryMethodParameter<ThreadPoolExecutorConfig> customFactoryMethodParameter) {
-        ThreadPoolExecutorConfig config = customFactoryMethodParameter.getFirstAnnotation();
+        ThreadPoolExecutorConfig config = customFactoryMethodParameter.getAnnotation();
         return new AutoShutdownThreadPoolExecutor(config.corePoolSize(), Math.max(config.corePoolSize(), config.maximumPoolSize()), config.keepAliveTime(),
             config.timeUnit(), new LinkedBlockingQueue<>(config.queueSize()), new SimpleThreadFactory(config.threadPoolId()), config.reject().newInstance());
     }
@@ -42,7 +42,7 @@ public class ThreadPoolExecutorBeanFactory extends CustomBeanFactory<ThreadPoolE
     }
 
     @Override
-    public String getAnnotationValue(ThreadPoolExecutorConfig annotation) {
+    public String getBeanValue(ThreadPoolExecutorConfig annotation) {
         return annotation.threadPoolId();
     }
 
@@ -73,10 +73,5 @@ public class ThreadPoolExecutorBeanFactory extends CustomBeanFactory<ThreadPoolE
             awaitTermination(1, TimeUnit.SECONDS);
             log.info("{} threadPool end destroy", ((SimpleThreadFactory) getThreadFactory()).threadFactoryName);
         }
-    }
-
-    @Override
-    public boolean openCheckDependencyDescriptor() {
-        return true;
     }
 }

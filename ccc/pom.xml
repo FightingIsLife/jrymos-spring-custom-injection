@@ -9,13 +9,17 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>memcached</artifactId>
+    <artifactId>ccc</artifactId>
 
-    <properties>
-        <jmemcached-version>1.0.0</jmemcached-version>
-        <Memcached-Java-Client-version>3.0.2</Memcached-Java-Client-version>
-    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>jrymos-spring-custom-injection</groupId>
+            <artifactId>core</artifactId>
+            <version>${spring-custom-injection.version}</version>
+        </dependency>
+    </dependencies>
 
+    <packaging>jar</packaging>
     <build>
         <plugins>
             <plugin>
@@ -28,18 +32,4 @@
             </plugin>
         </plugins>
     </build>
-
-
-    <dependencies>
-        <dependency>
-            <groupId>jrymos-spring-custom-injection</groupId>
-            <artifactId>core</artifactId>
-            <version>${spring-custom-injection.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whalin</groupId>
-            <artifactId>Memcached-Java-Client</artifactId>
-            <version>${Memcached-Java-Client-version}</version>
-        </dependency>
-    </dependencies>
 </project>

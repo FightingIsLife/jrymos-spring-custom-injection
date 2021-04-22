@@ -14,9 +14,9 @@ public class CustomBeanFactoryTest {
         XxxTask bean = applicationContext.getBean(XxxTask.class);
         Assert.assertEquals(applicationContext.getBean("xxxService"), bean.getXxxService());
         Assert.assertEquals(applicationContext.getBean("xxxBiz"), bean.getXxxBiz());
-        Assert.assertEquals(applicationContext.getBean("threadPoolExecutorBeanFactory$executor1"), bean.getE1());
-        Assert.assertEquals(applicationContext.getBean("threadPoolExecutorBeanFactory$threadPoolExecutor"), bean.getE2());
-        Assert.assertEquals(applicationContext.getBean("threadPoolExecutorBeanFactory$hello"), bean.getE3());
+        Assert.assertEquals(applicationContext.getBean("threadPoolExecutorBeanFactory$-executor1"), bean.getE1());
+        Assert.assertEquals(applicationContext.getBean("threadPoolExecutorBeanFactory$-threadPoolExecutor"), bean.getE2());
+        Assert.assertEquals(applicationContext.getBean("threadPoolExecutorBeanFactory$-hello"), bean.getE3());
     }
 
     @Test(expected = IllegalArgumentException.class)

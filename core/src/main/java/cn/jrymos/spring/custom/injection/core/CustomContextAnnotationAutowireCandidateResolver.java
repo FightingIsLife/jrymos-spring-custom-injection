@@ -24,13 +24,21 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
 
     private final Set<Class<? extends Annotation>> CUSTOM_QUALIFIER_ANNOTATIONS = CustomBeanFactoryRegister.getFactories()
         .stream().map(CustomBeanFactory::getAnnotationType).map(t -> (Class<? extends Annotation>) t).collect(Collectors.toSet());
+    private final Set<Class<? extends Annotation>> CUSTOM_MULTIPLE_QUALIFIER_ANNOTATIONS = CustomBeanFactoryRegister.getFactories()
+        .stream()
+        .filter(CustomBeanFactory::isMultipleFactory)
+        .map(CustomBeanFactory::getAnnotationType)
+        .map(t -> (Class<? extends Annotation>) t)
+        .collect(Collectors.toSet());
     private final Set<Class<? extends Annotation>> QUALIFIER_ANNOTATIONS = ImmutableSet.<Class<? extends Annotation>>builder()
         .addAll(CUSTOM_QUALIFIER_ANNOTATIONS)
         .add(Qualifier.class)
         .build();
 
     @Override
-    public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+    public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor dependencyDescriptor) {
+        if (isMultipleButNotMatchMultipleBdHolder(bdHolder, dependencyDescriptor)) return false;
+        DependencyDescriptor descriptor = dependencyDescriptor;
         if (bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition) {
             // 切换annotationElement, CustomRootBeanDefinition支持设置多个annotationElement
             descriptor = new CustomDependencyDescriptor(descriptor);
@@ -39,8 +47,6 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
         // 父类匹配会对类型、Qualifier注解进行匹配
         boolean match = super.isAutowireCandidate(bdHolder, descriptor);
         List<Annotation> qualifierAnnotations = getQualifierAnnotations(descriptor);
-        // 有必要校验一些依赖必须要有自定义注解
-        checkDependencyDescriptor(descriptor, qualifierAnnotations);
         boolean result = match && isMatchQualifierAnnotation(qualifierAnnotations, bdHolder);
         if (bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition) {
             // 还原成旧的
@@ -49,11 +55,16 @@ public class CustomContextAnnotationAutowireCandidateResolver extends ContextAnn
         return result;
     }
 
-    private void checkDependencyDescriptor(DependencyDescriptor descriptor, List<Annotation> annotations) {
-        for (CustomBeanFactory customBeanFactory : CustomBeanFactoryRegister.getFactories()) {
-            customBeanFactory.checkDependencyDescriptor(descriptor, annotations);
-        }
+    private boolean isMultipleButNotMatchMultipleBdHolder(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+        CustomDependencyDescriptor customDescriptor = new CustomDependencyDescriptor(descriptor);
+        List<Annotation> qualifierAnnotations = getQualifierAnnotations(customDescriptor);
+        return qualifierAnnotations.size() == 1
+            && CUSTOM_MULTIPLE_QUALIFIER_ANNOTATIONS.contains(qualifierAnnotations.get(0).annotationType())
+            && (!(bdHolder.getBeanDefinition() instanceof CustomRootBeanDefinition)
+            || descriptor.fallbackMatchAllowed() // 拒绝MultiElementDescriptor类型的重找
+            || descriptor.getClass().getSimpleName().contains("MultiElementDescriptor"));
     }
+
 
     private List<Annotation> getQualifierAnnotations(DependencyDescriptor descriptor) {
         if (ObjectUtils.isNotEmpty(descriptor.getAnnotations())) {
