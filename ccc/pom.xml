@@ -8,7 +8,7 @@
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <!-- 增强集合注入模块 -->
+    <!-- demo2:增强集合注入模块 -->
     <artifactId>ccc</artifactId>
 
     <dependencies>
