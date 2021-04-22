@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- 核心模块 -->
     <artifactId>core</artifactId>
     <packaging>jar</packaging>
     <build>
