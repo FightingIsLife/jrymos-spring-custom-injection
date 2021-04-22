@@ -27,7 +27,7 @@ public class XxxService {
     @CccCollection(value = {"pool1", "pool2"}, prefixClass = ThreadPoolFactory.class)
     private final List<ExecutorService> executorServices2;
 
-    //注入一个线程池map，key为pool1、pool2，线程池id为pool1、pool3的线程池
+    //注入一个线程池map，key为pool1、pool3，线程池id为pool1、pool3的线程池
     @CccMap(value = {"pool1", "pool3"}, prefixClass = ThreadPoolFactory.class)
     private final Map<String, ExecutorService> executorServices3;
 }
