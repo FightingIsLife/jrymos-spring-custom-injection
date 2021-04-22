@@ -1,5 +1,5 @@
 # jrymos-spring-custom-injection
-这是一款轻量级（core代码不到250行，所有代码含测试代码不到1000行）自定义spring注入，先看个demo
+这是一款轻量级（core代码不到300行，所有代码含测试代码不到1000行）自定义spring注入，先看个demo
 
 demo1: 线程池的创建简化：
 ```
@@ -20,6 +20,16 @@ public class XxxService {
     @ThreadPoolConfig(id = "pool3", maxS = 10, qSize = 0, reject = ThreadPoolExecutor.DiscardPolicy.class)
     private final ExecutorService executorService;
 
+    //注入一个线程池列表，包含所有的线程池
+    private final List<ExecutorService> executorServices;
+
+    //注入一个线程池列表，只包含id=pool1、pool2的线程池
+    @CccCollection(value = {"pool1", "pool2"}, prefixClass = ThreadPoolFactory.class)
+    private final List<ExecutorService> executorServices2;
+
+    //注入一个线程池map，key为pool1、pool2，线程池id为pool1、pool3的线程池
+    @CccMap(value = {"pool1", "pool3"}, prefixClass = ThreadPoolFactory.class)
+    private final Map<String, ExecutorService> executorServices3;
 }
 ```
 
@@ -29,7 +39,42 @@ public class XxxService {
 3. 将bean的生命周期交给spring管理，减少漏释放资源导致的bug
 4. 非常容易扩展，实现自己想要的定制化功能只需要继承CustomBeanFactory抽象类，并实现抽象方法即可
 
-demo2: redisson的RObject创建简化：
+demo2: 更强大的集合的注入：
+```
+public class XxxService {
+
+    //传统方式，注入所有的animal
+    private final Map<String, Animal> animalMap; 
+    private final Set<Animal> animalSet;
+
+    //增强的注入方式，支持指定key的获取
+    @CccMap(keyMethod = "getClass")
+    private final Map<Class<? extends Animal>, Animal> map1;
+    //支持注入的map只包含指定的元素
+    @CccMap(value = {"duck", "cat"})
+    private final Map<String, Animal> map2;
+    //同时支持前面两种
+    @CccMap(value = {"bird", "duck"}, keyMethod = "getClass")
+    private final Map<Class<? extends Animal>, Animal> map3;
+    //支持注入的value类型设置为任意类型
+    @CccMap(value = {"water", "cat"})
+    private final Map<String, Object> map4;
+
+
+    @CccCollection
+    private final Collection<Animal> empty;
+    @CccCollection("water")
+    private final Collection<Water> collection;
+    @CccCollection("water")
+    private final List<Water> list;
+    @CccCollection({"water", "cat", "bird"})
+    private final Set<Object> set;
+    @CccCollection({"bird", "duck", "cat"})
+    private final TreeSet<Animal> treeSet;
+}
+```
+
+demo3: redisson的RObject创建简化：
 ```
 @Service
 @RequiredArgsConstructor
@@ -51,7 +96,7 @@ public class XxxService {
 }
 ```
 
-demo3: MemcachedLock创建简化：
+demo4: MemcachedLock创建简化：
 ```
 @Service
 @RequiredArgsConstructor
@@ -76,7 +121,7 @@ public class XxxService {
 }
 ```
 
-demo4: 支持spring所能支持的任意一种注入方式：
+demo5: 支持spring所能支持的任意一种注入方式：
 ```
 @Service
 public class XxxService {
