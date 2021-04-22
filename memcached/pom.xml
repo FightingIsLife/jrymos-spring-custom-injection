@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- demo4: MemcachedLock创建简化模块 -->
     <artifactId>memcached</artifactId>
 
     <properties>
