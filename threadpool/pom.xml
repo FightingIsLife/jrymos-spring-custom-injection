@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- demo1: 线程池的创建简化模块 -->
     <artifactId>threadpool</artifactId>
 
     <dependencies>
