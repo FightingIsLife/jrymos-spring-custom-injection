@@ -71,18 +71,34 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
      */
     private void registryCustomBeanFactory(BeanDefinitionRegistry registry, String[] beanDefinitionNames)
         throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-        for (String beanDefinitionName : beanDefinitionNames) {
-            BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
-            if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
-                Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
-                if (CustomBeanFactory.class.isAssignableFrom(rawClass)) {
-                    CustomBeanFactory customBeanFactory = (CustomBeanFactory) rawClass.newInstance();
-                    CustomBeanFactoryRegister.register(customBeanFactory);
-                    if (registry instanceof SingletonBeanRegistry) {
-                        ((SingletonBeanRegistry) registry).registerSingleton(customBeanFactory.getName(), customBeanFactory);
+        synchronized (CustomBeanFactoryRegister.class) {
+            CustomBeanFactoryRegister.openRegister();
+            if (registry instanceof SingletonBeanRegistry) {
+                //将CustomBeanFactoryRegister中的CustomBeanFactory注册到spring中
+                for (CustomBeanFactory factory : CustomBeanFactoryRegister.getFactories()) {
+                    ((SingletonBeanRegistry) registry).registerSingleton(factory.getName(), factory);
+                }
+                for (String beanDefinitionName : beanDefinitionNames) {
+                    BeanDefinition beanDefinition = registry.getBeanDefinition(beanDefinitionName);
+                    if (StringUtils.isNotEmpty(beanDefinition.getBeanClassName())) {
+                        Class<?> rawClass = Class.forName(beanDefinition.getBeanClassName());
+                        if (CustomBeanFactory.class.isAssignableFrom(rawClass)) {
+                            if (registry instanceof BeanFactory) {
+                                // 将spring中的CustomBeanFactory注册到CustomBeanFactoryRegister中
+                                String name = CustomBeanFactory.getName((Class<? extends CustomBeanFactory>) rawClass);
+                                CustomBeanFactory bean = (CustomBeanFactory) ((BeanFactory) registry).getBean(name, rawClass);
+                                CustomBeanFactoryRegister.register(bean);
+                            } else {
+                                CustomBeanFactory customBeanFactory = (CustomBeanFactory) rawClass.newInstance();
+                                CustomBeanFactoryRegister.register(customBeanFactory);
+                                ((SingletonBeanRegistry) registry).registerSingleton(customBeanFactory.getName(), customBeanFactory);
+                            }
+                        }
                     }
                 }
             }
+            // 后续注册的CustomBeanFactory不会注册到spring中，所以应该禁止注册到CustomBeanFactoryRegister中
+            CustomBeanFactoryRegister.stopRegister();
         }
     }
 

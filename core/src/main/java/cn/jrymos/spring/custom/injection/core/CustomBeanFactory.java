@@ -16,11 +16,12 @@ import java.util.Map;
 
 /**
  * 自定义注解的实例工厂
- * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数,子类需要通过@Configuration注册到spring中
+ * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数,子类可以通过@Configuration注册到spring中，也可以调用CustomBeanFactoryRegister.register注册
  * 相关demo:
  * @see ThreadPoolFactory
  * @see RedissonObjectFactory
  * @see MemcachedLockFactory
+ * @see CustomBeanFactoryRegister#register(CustomBeanFactory)
  * @param <T> 注解的元注解至少应该有@Target({ElementType.FIELD})、@Retention(RetentionPolicy.RUNTIME)
  */
 public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, Ordered {
@@ -128,7 +129,11 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
      * 工厂注册到spring的beanName
      */
     public final String getName() {
-        String simpleName = this.getClass().getSimpleName();
+        return getName(getClass());
+    }
+
+    public static String getName(Class<? extends CustomBeanFactory> clazz) {
+        String simpleName = clazz.getSimpleName();
         int endIndex = simpleName.contains("$") ? simpleName.indexOf("$") : simpleName.length();
         return simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1, endIndex);
     }

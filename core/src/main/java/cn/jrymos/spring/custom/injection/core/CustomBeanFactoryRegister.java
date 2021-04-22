@@ -3,6 +3,7 @@ package cn.jrymos.spring.custom.injection.core;
 import cn.jrymos.util.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 public class CustomBeanFactoryRegister {
 
     private static volatile Map<Class<? extends Annotation>, CustomBeanFactory> FACTORIES;
+    @Getter
+    private static volatile boolean stopRegister = false;
 
     static {
         getFactories();
@@ -62,6 +65,9 @@ public class CustomBeanFactoryRegister {
      * 注册一个customBeanFactory
      */
     public synchronized static void register(CustomBeanFactory customBeanFactory) {
+        if (stopRegister) {
+            throw new IllegalStateException("stop register");
+        }
         Preconditions.checkNotNull(customBeanFactory);
         if (FACTORIES == null) {
             initFactories();
@@ -97,4 +103,11 @@ public class CustomBeanFactoryRegister {
         return clazz.newInstance();
     }
 
+    void stopRegister() {
+        stopRegister = true;
+    }
+
+    void openRegister() {
+        stopRegister = false;
+    }
 }
