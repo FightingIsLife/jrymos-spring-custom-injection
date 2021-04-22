@@ -164,28 +164,36 @@ public class XxxBiz2 {
 ### 如何使用？
 把源码下载下来，可以直接运行里面的所有测试方法，看看效果。
 ```
-<modules>
-    <module>core</module>
-    <module>redisson</module>
-    <module>memcached</module>
-    <module>threadpool</module>
-</modules>
+    <modules>
+        <!--    核心模块    -->
+        <module>core</module>
+        <!--    自动注入RObject实现 demo模块    -->
+        <module>redisson</module>
+        <!--    自动注入MemcachedLock实现 demo模块    -->
+        <module>memcached</module>
+        <!--    自动注入ThreadPoolExecutor实现 demo模块    -->
+        <module>threadpool</module>
+        <!--    自动注入Collection、List、Set、Map实现 demo模块    -->
+        <module>ccc</module>
+    </modules>
 ```
-一共有四个模块，除了core以外其他都不是必须的，不需要的可以删掉，也可以进行二次开发，也可以扩展新的模块，非常的轻量级。
+一共有5个模块，除了core以外其他都不是必须的，不需要的可以删掉，也可以进行二次开发，也可以扩展新的模块，非常的轻量级。
 
 ### 二次开发扩展：继承下面的抽象类，按照你的需要，重写一些方法，就能实现自定义的注入功能
-可以参考：ThreadPoolFactory、RedissonObjectFactory、MemcachedLockFactory
+可以参考：ThreadPoolFactory、RedissonObjectFactory、MemcachedLockFactory、CccCollectionFactory、CccMapFactory
 ```
 /**
  * 自定义注解的实例工厂
- * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数,子类需要通过@Configuration注册到spring中
- * 相关子类demo:
+ * 每次新增自定义注解，只需要继承CustomBeanFactory, 子类应该保证是空的构造函数,子类可以通过@Configuration注册到spring中，也可以调用CustomBeanFactoryRegister.register注册
+ * 相关demo:
  * @see ThreadPoolFactory
  * @see RedissonObjectFactory
  * @see MemcachedLockFactory
+ * @see CustomBeanFactoryRegister#register(CustomBeanFactory)
  * @param <T> 注解的元注解至少应该有@Target({ElementType.FIELD})、@Retention(RetentionPolicy.RUNTIME)
  */
-public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, Ordered {
+@Slf4j
+public abstract class CustomBeanFactory<T extends Annotation, R> implements BeanFactoryPostProcessor, BeanNamePrefix, Ordered {
 
     /**
      * 自定义注解class类型
@@ -193,13 +201,14 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
     public abstract Class<T> getAnnotationType();
 
     /**
-     * 获取支持的注解的value，如果没有value字段或者唯一字段不是value，请重写
+     * 获取bean标识的值
+     * such as:
+     * @see ThreadPoolConfig#id
+     * @see CccCollection#hashcode
+     * @see RedissonKey#redisKey
+     * @see MemcachedLockConfig#identify
      */
-    public String getAnnotationValue(T annotation) {
-        String value = (String) AnnotationUtils.getAnnotationAttributes(annotation).get("value");
-        Preconditions.checkNotNull(value);
-        return value;
-    }
+    public abstract String getBeanValue(T annotation);
 
     /**
      * 获取工厂方法， 支持重写以传递更多的参数（只要是spring bean都支持传，无需做额外处理）
@@ -214,7 +223,6 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
     }
 
     /**
-     * 生成bean实例的工厂方法
      * 如果没有重写getFactoryMethod，那就一定要重写factoryMethod
      * 如果重写了getFactoryMethod，那就没有任何必要重写factoryMethod了
      */
@@ -222,6 +230,5 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
         //such as: return customFactoryMethodParameter.getBeanClass().newInstance();
         throw new UnsupportedOperationException("not implements");
     }
-   //...
 }
 ```
