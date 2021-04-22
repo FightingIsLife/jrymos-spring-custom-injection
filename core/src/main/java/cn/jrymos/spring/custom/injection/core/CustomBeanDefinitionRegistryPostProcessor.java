@@ -71,6 +71,9 @@ public class CustomBeanDefinitionRegistryPostProcessor extends CustomAutowireCon
      */
     private void registryCustomBeanFactory(BeanDefinitionRegistry registry, String[] beanDefinitionNames)
         throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        if (!CustomInjectionCoreConfig.getConfig().isAutoRegisterCustomBeanFactoryByBeanDefinition()) {
+            return;
+        }
         synchronized (CustomBeanFactoryRegister.class) {
             CustomBeanFactoryRegister.openRegister();
             if (registry instanceof SingletonBeanRegistry) {
