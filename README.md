@@ -234,4 +234,4 @@ public abstract class CustomBeanFactory<T extends Annotation, R> implements Bean
 ```
 
 ### core模块的实现原理
-![avatar](./实现原理.png)
+![avatar](core-principle.png)
