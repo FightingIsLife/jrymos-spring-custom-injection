@@ -16,7 +16,7 @@ public class XxxService {
     @ThreadPoolConfig(id = "pool2", coreS = 2, qSize = 999)
     private final Executor executor;
 
-    //注入一个最大线程数=2，同步队列，拒绝策略采用忽略
+    //注入一个最大线程数=10，同步队列，拒绝策略采用忽略
     @ThreadPoolConfig(id = "pool3", maxS = 10, qSize = 0, reject = ThreadPoolExecutor.DiscardPolicy.class)
     private final ExecutorService executorService;
 
